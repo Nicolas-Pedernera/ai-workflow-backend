@@ -54,7 +54,7 @@ describe("Workflows API", () => {
     await app.close();
   });
 
-  it("runs a workflow and retrieves the run", async () => {
+  it("runs a workflow successfully", async () => {
     const app = buildApp();
 
     const createResponse = await app.inject({
@@ -82,8 +82,16 @@ describe("Workflows API", () => {
     const run = runResponse.json().data;
 
     expect(run.status).toBe("completed");
-    expect(run.input).toEqual({
-      prompt: "Hello AI"
+    expect(run.startedAt).not.toBeNull();
+    expect(run.completedAt).not.toBeNull();
+    expect(run.error).toBeNull();
+
+    expect(run.output).toEqual({
+      message: 'Workflow "AI assistant" executed successfully',
+      workflowId,
+      processedInput: {
+        prompt: "Hello AI"
+      }
     });
 
     const getRunResponse = await app.inject({
@@ -97,12 +105,61 @@ describe("Workflows API", () => {
     await app.close();
   });
 
+  it("handles a failed workflow execution", async () => {
+    const app = buildApp();
+
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/api/v1/workflows",
+      payload: {
+        name: "Failing workflow"
+      }
+    });
+
+    const workflowId = createResponse.json().data.id;
+
+    const runResponse = await app.inject({
+      method: "POST",
+      url: `/api/v1/workflows/${workflowId}/run`,
+      payload: {
+        input: {
+          fail: true
+        }
+      }
+    });
+
+    expect(runResponse.statusCode).toBe(201);
+
+    const run = runResponse.json().data;
+
+    expect(run.status).toBe("failed");
+    expect(run.output).toBeNull();
+    expect(run.error).toBe("Workflow execution failed");
+    expect(run.startedAt).not.toBeNull();
+    expect(run.completedAt).not.toBeNull();
+
+    await app.close();
+  });
+
   it("returns 404 when a workflow does not exist", async () => {
     const app = buildApp();
 
     const response = await app.inject({
       method: "GET",
       url: "/api/v1/workflows/unknown"
+    });
+
+    expect(response.statusCode).toBe(404);
+
+    await app.close();
+  });
+
+  it("returns 404 when running an unknown workflow", async () => {
+    const app = buildApp();
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/workflows/unknown/run"
     });
 
     expect(response.statusCode).toBe(404);
