@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { WorkflowRepository } from "./workflow.repository.js";
 import type {
   CreateWorkflowInput,
@@ -10,10 +11,6 @@ import type { AIProvider } from "../../providers/ai/ai-provider.js";
 export class WorkflowService {
   private readonly repository: WorkflowRepository;
   private readonly aiProvider: AIProvider;
-
-  private workflowCounter = 0;
-
-  private runCounter = 0;
 
   constructor(
     repository = new WorkflowRepository(),
@@ -34,10 +31,8 @@ export class WorkflowService {
   async create(input: CreateWorkflowInput): Promise<Workflow> {
     const now = new Date().toISOString();
 
-    this.workflowCounter += 1;
-
     const workflow: Workflow = {
-      id: `wf_${this.workflowCounter}`,
+      id: `wf_${crypto.randomUUID()}`,
       name: input.name,
       description: input.description ?? "",
       status: "active",
@@ -60,10 +55,8 @@ export class WorkflowService {
 
     const createdAt = new Date().toISOString();
 
-    this.runCounter += 1;
-
     const run: WorkflowRun = {
-      id: `run_${this.runCounter}`,
+      id: `run_${crypto.randomUUID()}`,
       workflowId,
       status: "pending",
       input,
