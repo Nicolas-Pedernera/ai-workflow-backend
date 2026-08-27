@@ -4,16 +4,23 @@ import type {
   Workflow,
   WorkflowRun
 } from "./workflow.types.js";
+import { AIProviderFactory } from "../../providers/ai/ai-provider.factory.js";
+import type { AIProvider } from "../../providers/ai/ai-provider.js";
 
 export class WorkflowService {
   private readonly repository: WorkflowRepository;
+  private readonly aiProvider: AIProvider;
 
   private workflowCounter = 0;
 
   private runCounter = 0;
 
-  constructor(repository = new WorkflowRepository()) {
+  constructor(
+    repository = new WorkflowRepository(),
+    aiProvider = AIProviderFactory.create()
+  ) {
     this.repository = repository;
+    this.aiProvider = aiProvider;
   }
 
   list(): Workflow[] {
@@ -41,10 +48,10 @@ export class WorkflowService {
     return this.repository.saveWorkflow(workflow);
   }
 
-  run(
+  async run(
     workflowId: string,
     input: Record<string, unknown> = {}
-  ): WorkflowRun | undefined {
+  ): Promise<WorkflowRun | undefined> {
     const workflow = this.repository.findWorkflowById(workflowId);
 
     if (!workflow) {
@@ -72,23 +79,37 @@ export class WorkflowService {
     run.status = "running";
     run.startedAt = new Date().toISOString();
 
-    if (input.fail === true) {
+    try {
+      if (input.fail === true) {
+        throw new Error("Workflow execution failed");
+      }
+
+      const prompt =
+        typeof input.prompt === "string"
+          ? input.prompt
+          : JSON.stringify(input);
+
+      const providerOutput = await this.aiProvider.generate(prompt);
+
+      run.status = "completed";
+      run.output = {
+        message: providerOutput,
+        workflowId,
+        processedInput: input
+      };
+      run.completedAt = new Date().toISOString();
+
+      return this.repository.saveRun(run);
+    } catch (error) {
       run.status = "failed";
-      run.error = "Workflow execution failed";
+      run.error =
+        error instanceof Error
+          ? error.message
+          : "Workflow execution failed";
       run.completedAt = new Date().toISOString();
 
       return this.repository.saveRun(run);
     }
-
-    run.status = "completed";
-    run.output = {
-      message: `Workflow "${workflow.name}" executed successfully`,
-      workflowId,
-      processedInput: input
-    };
-    run.completedAt = new Date().toISOString();
-
-    return this.repository.saveRun(run);
   }
 
   getRunById(id: string): WorkflowRun | undefined {

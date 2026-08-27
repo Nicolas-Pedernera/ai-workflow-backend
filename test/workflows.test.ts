@@ -87,7 +87,7 @@ describe("Workflows API", () => {
     expect(run.error).toBeNull();
 
     expect(run.output).toEqual({
-      message: 'Workflow "AI assistant" executed successfully',
+      message: "Mock response for: Hello AI",
       workflowId,
       processedInput: {
         prompt: "Hello AI"

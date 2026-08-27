@@ -88,7 +88,7 @@ export function registerWorkflowRoutes(
       });
     }
 
-    const run = workflowService.run(
+    const run = await workflowService.run(
       request.params.id,
       body.input ?? {}
     );
