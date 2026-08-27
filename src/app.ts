@@ -1,9 +1,13 @@
 import Fastify from "fastify";
+import { registerWorkflowRoutes } from "./modules/workflows/workflow.routes.js";
+import { WorkflowService } from "./modules/workflows/workflow.service.js";
 
 export function buildApp() {
   const app = Fastify({
     logger: true
   });
+
+  const workflowService = new WorkflowService();
 
   app.get("/health", async () => {
     return {
@@ -20,6 +24,8 @@ export function buildApp() {
       environment: process.env.NODE_ENV || "development"
     };
   });
+
+  registerWorkflowRoutes(app, workflowService);
 
   app.setNotFoundHandler((request, reply) => {
     reply.status(404).send({
