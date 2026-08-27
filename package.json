@@ -4,6 +4,12 @@
   "description": "Production-oriented backend for AI workflows, automation, REST APIs, webhooks, and intelligent agent systems.",
   "private": false,
   "type": "module",
+  "license": "MIT",
+  "author": "Nicolás Pedernera <https://github.com/Nicolas-Pedernera>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nicolas-Pedernera/ai-workflow-backend.git"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -12,7 +18,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "dotenv": "^17.4.2",
     "fastify": "^5.0.0",
     "pg": "^8.23.0"
   },

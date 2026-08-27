@@ -37,6 +37,7 @@ PostgreSQL           AI Provider(s)
 - Workflow creation and retrieval
 - Workflow execution lifecycle
 - PostgreSQL persistence
+- SQL migrations tracked in version control
 - Repository pattern for data access
 - Service layer for business logic
 - AI provider abstraction
@@ -49,6 +50,9 @@ PostgreSQL           AI Provider(s)
 ## Project Structure
 
 ```text
+migrations/
+└── 001_init.sql
+
 src/
 ├── app.ts
 ├── server.ts
@@ -79,6 +83,14 @@ Create Workflow -> Persist Workflow -> Execute Workflow -> Create Run -> Track E
 
 AI integrations are isolated behind an explicit provider interface. This avoids coupling the workflow engine to a specific AI vendor and allows providers to be replaced or extended independently.
 
+## Database Migrations
+
+Schema changes are tracked as plain SQL files under `migrations/`. Apply them manually against the running Postgres container:
+
+```bash
+docker compose exec -T postgres psql -U ai_workflow_user -d ai_workflow < migrations/001_init.sql
+```
+
 ## API
 
 - GET /health
@@ -106,6 +118,7 @@ AI integrations are isolated behind an explicit provider interface. This avoids 
 npm install
 cp .env.example .env
 docker compose up -d
+docker compose exec -T postgres psql -U ai_workflow_user -d ai_workflow < migrations/001_init.sql
 npm run dev
 ```
 
@@ -143,6 +156,10 @@ Current test status: **2 test files passed / 10 tests passed**.
 - Rate limiting
 - Distributed execution
 - Production deployment automation
+
+## License
+
+MIT — see [LICENSE](./LICENSE) for details.
 
 ## Author
 
