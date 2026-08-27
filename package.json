@@ -12,11 +12,13 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "fastify": "^5.0.0"
+    "fastify": "^5.0.0",
+    "pg": "^8.23.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
     "eslint": "^9.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",

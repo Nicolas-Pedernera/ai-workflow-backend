@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ai-workflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_workflow
+      POSTGRES_USER: ai_workflow_user
+      POSTGRES_PASSWORD: ai_workflow_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
