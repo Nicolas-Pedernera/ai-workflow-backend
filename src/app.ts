@@ -21,7 +21,9 @@ export function buildApp() {
       status: "ok",
       service: "ai-workflow-backend",
       version: "1.0.0",
-      environment: process.env.NODE_ENV || "development"
+      environment: process.env.NODE_ENV || "development",
+      uptimeSeconds: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString()
     };
   });
 

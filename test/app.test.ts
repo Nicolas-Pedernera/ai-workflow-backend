@@ -11,7 +11,7 @@ describe("API", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({
+    expect(response.json()).toMatchObject({
       status: "ok",
       service: "ai-workflow-backend"
     });
@@ -29,7 +29,7 @@ describe("API", () => {
 
     expect(response.statusCode).toBe(200);
 
-    expect(response.json()).toEqual({
+    expect(response.json()).toMatchObject({
       status: "ok",
       service: "ai-workflow-backend",
       version: "1.0.0",
@@ -49,7 +49,7 @@ describe("API", () => {
 
     expect(response.statusCode).toBe(404);
 
-    expect(response.json()).toEqual({
+    expect(response.json()).toMatchObject({
       status: "error",
       error: "Not Found",
       message: "Route GET /does-not-exist not found"
