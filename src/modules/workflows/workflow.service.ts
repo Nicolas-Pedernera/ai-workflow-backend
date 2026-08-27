@@ -23,15 +23,15 @@ export class WorkflowService {
     this.aiProvider = aiProvider;
   }
 
-  list(): Workflow[] {
+  async list(): Promise<Workflow[]> {
     return this.repository.findAllWorkflows();
   }
 
-  getById(id: string): Workflow | undefined {
+  async getById(id: string): Promise<Workflow | undefined> {
     return this.repository.findWorkflowById(id);
   }
 
-  create(input: CreateWorkflowInput): Workflow {
+  async create(input: CreateWorkflowInput): Promise<Workflow> {
     const now = new Date().toISOString();
 
     this.workflowCounter += 1;
@@ -45,14 +45,14 @@ export class WorkflowService {
       updatedAt: now
     };
 
-    return this.repository.saveWorkflow(workflow);
+    return await this.repository.saveWorkflow(workflow);
   }
 
   async run(
     workflowId: string,
     input: Record<string, unknown> = {}
   ): Promise<WorkflowRun | undefined> {
-    const workflow = this.repository.findWorkflowById(workflowId);
+    const workflow = await this.repository.findWorkflowById(workflowId);
 
     if (!workflow) {
       return undefined;
@@ -74,7 +74,7 @@ export class WorkflowService {
       completedAt: null
     };
 
-    this.repository.saveRun(run);
+    await this.repository.saveRun(run);
 
     run.status = "running";
     run.startedAt = new Date().toISOString();
@@ -99,7 +99,7 @@ export class WorkflowService {
       };
       run.completedAt = new Date().toISOString();
 
-      return this.repository.saveRun(run);
+      return await this.repository.saveRun(run);
     } catch (error) {
       run.status = "failed";
       run.error =
@@ -108,11 +108,11 @@ export class WorkflowService {
           : "Workflow execution failed";
       run.completedAt = new Date().toISOString();
 
-      return this.repository.saveRun(run);
+      return await this.repository.saveRun(run);
     }
   }
 
-  getRunById(id: string): WorkflowRun | undefined {
-    return this.repository.findRunById(id);
+  async getRunById(id: string): Promise<WorkflowRun | undefined> {
+    return await this.repository.findRunById(id);
   }
 }

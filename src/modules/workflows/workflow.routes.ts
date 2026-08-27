@@ -7,7 +7,7 @@ export function registerWorkflowRoutes(
 ) {
   app.get("/api/v1/workflows", async () => {
     return {
-      data: workflowService.list()
+      data: await workflowService.list()
     };
   });
 
@@ -39,7 +39,7 @@ export function registerWorkflowRoutes(
       });
     }
 
-    const workflow = workflowService.create({
+    const workflow = await workflowService.create({
       name: body.name.trim(),
       description: body.description
     });
@@ -52,7 +52,7 @@ export function registerWorkflowRoutes(
   app.get<{
     Params: { id: string };
   }>("/api/v1/workflows/:id", async (request, reply) => {
-    const workflow = workflowService.getById(request.params.id);
+    const workflow = await workflowService.getById(request.params.id);
 
     if (!workflow) {
       return reply.status(404).send({
@@ -109,7 +109,7 @@ export function registerWorkflowRoutes(
   app.get<{
     Params: { id: string };
   }>("/api/v1/runs/:id", async (request, reply) => {
-    const run = workflowService.getRunById(request.params.id);
+    const run = await workflowService.getRunById(request.params.id);
 
     if (!run) {
       return reply.status(404).send({
