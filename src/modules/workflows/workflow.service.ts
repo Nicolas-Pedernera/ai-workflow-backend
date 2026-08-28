@@ -125,10 +125,11 @@ export class WorkflowService {
 
     const blockchainWorkflow = await this.blockchain.getWorkflow(workflowId);
 
-    return {
-      ...blockchainWorkflow,
-      createdAt: blockchainWorkflow.createdAt.toString()
-    };
+    if (!blockchainWorkflow) {
+      return undefined;
+    }
+
+    return blockchainWorkflow;
   }
 
   async getRunById(id: string): Promise<WorkflowRun | undefined> {
