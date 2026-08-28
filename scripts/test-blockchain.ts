@@ -1,8 +1,9 @@
+import crypto from "node:crypto";
 import { BlockchainService } from "../src/modules/blockchain/blockchain.service.js";
 
 const blockchain = new BlockchainService();
 
-const workflowId = "wf_test_blockchain_001";
+const workflowId = `wf_test_blockchain_${crypto.randomUUID()}`;
 
 console.log("Registering workflow:", workflowId);
 

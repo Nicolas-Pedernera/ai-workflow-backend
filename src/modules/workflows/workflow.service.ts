@@ -7,17 +7,21 @@ import type {
 } from "./workflow.types.js";
 import { AIProviderFactory } from "../../providers/ai/ai-provider.factory.js";
 import type { AIProvider } from "../../providers/ai/ai-provider.js";
+import { BlockchainService } from "../blockchain/blockchain.service.js";
 
 export class WorkflowService {
   private readonly repository: WorkflowRepository;
   private readonly aiProvider: AIProvider;
+  private readonly blockchain: BlockchainService;
 
   constructor(
     repository = new WorkflowRepository(),
-    aiProvider = AIProviderFactory.create()
+    aiProvider = AIProviderFactory.create(),
+    blockchain = new BlockchainService()
   ) {
     this.repository = repository;
     this.aiProvider = aiProvider;
+    this.blockchain = blockchain;
   }
 
   async list(): Promise<Workflow[]> {
@@ -41,6 +45,11 @@ export class WorkflowService {
       blockchainId: null,
       blockchainTransactionHash: null
     };
+
+    const registration = await this.blockchain.registerWorkflow(workflow.id);
+
+    workflow.blockchainId = registration.blockchainId;
+    workflow.blockchainTransactionHash = registration.transactionHash;
 
     return await this.repository.saveWorkflow(workflow);
   }

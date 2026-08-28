@@ -2,12 +2,10 @@ import Fastify from "fastify";
 import { registerWorkflowRoutes } from "./modules/workflows/workflow.routes.js";
 import { WorkflowService } from "./modules/workflows/workflow.service.js";
 
-export function buildApp() {
+export function buildApp(workflowService = new WorkflowService()) {
   const app = Fastify({
     logger: true
   });
-
-  const workflowService = new WorkflowService();
 
   app.get("/health", async () => {
     return {
