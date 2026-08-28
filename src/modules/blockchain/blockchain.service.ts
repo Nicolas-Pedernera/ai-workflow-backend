@@ -56,11 +56,18 @@ export class BlockchainService {
   async getWorkflow(workflowId: string) {
     const blockchainId = this.workflowIdToBytes32(workflowId);
 
-    return await this.publicClient.readContract({
+    const workflow = await this.publicClient.readContract({
       address: this.contractAddress,
       abi: workflowRegistryAbi,
       functionName: "getWorkflow",
       args: [blockchainId]
     });
+
+    return {
+      workflowId: workflow.workflowId,
+      owner: workflow.owner,
+      active: workflow.active,
+      createdAt: workflow.createdAt.toString()
+    };
   }
 }

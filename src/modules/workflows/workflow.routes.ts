@@ -67,6 +67,26 @@ export function registerWorkflowRoutes(
     };
   });
 
+  app.get<{
+    Params: { id: string };
+  }>("/api/v1/workflows/:id/blockchain", async (request, reply) => {
+    const workflow = await workflowService.getBlockchainWorkflow(
+      request.params.id
+    );
+
+    if (!workflow) {
+      return reply.status(404).send({
+        status: "error",
+        error: "Not Found",
+        message: "Workflow not found"
+      });
+    }
+
+    return {
+      data: workflow
+    };
+  });
+
   app.post<{
     Params: { id: string };
     Body: { input?: Record<string, unknown> };

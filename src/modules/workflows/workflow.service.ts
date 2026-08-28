@@ -116,6 +116,21 @@ export class WorkflowService {
     }
   }
 
+  async getBlockchainWorkflow(workflowId: string) {
+    const workflow = await this.repository.findWorkflowById(workflowId);
+
+    if (!workflow) {
+      return undefined;
+    }
+
+    const blockchainWorkflow = await this.blockchain.getWorkflow(workflowId);
+
+    return {
+      ...blockchainWorkflow,
+      createdAt: blockchainWorkflow.createdAt.toString()
+    };
+  }
+
   async getRunById(id: string): Promise<WorkflowRun | undefined> {
     return await this.repository.findRunById(id);
   }

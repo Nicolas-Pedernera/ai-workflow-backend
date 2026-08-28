@@ -1,9 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
+import { WorkflowService } from "../src/modules/workflows/workflow.service.js";
 
 describe("Workflows API", () => {
+  function buildTestApp() {
+    const blockchain = {
+      registerWorkflow: async (workflowId: string) => ({
+        blockchainId: `0x${workflowId.replace(/[^a-f0-9]/gi, "").padEnd(64, "0").slice(0, 64)}`,
+        transactionHash: `0x${"a".repeat(64)}`
+      })
+    };
+
+    const workflowService = new WorkflowService(
+      undefined,
+      undefined,
+      blockchain as any
+    );
+
+    return buildApp(workflowService);
+  }
   it("creates and retrieves a workflow", async () => {
-    const app = buildApp();
+    const app = buildTestApp();
 
     const createResponse = await app.inject({
       method: "POST",
@@ -33,7 +50,7 @@ describe("Workflows API", () => {
   });
 
   it("lists workflows", async () => {
-    const app = buildApp();
+    const app = buildTestApp();
 
     await app.inject({
       method: "POST",
@@ -55,7 +72,7 @@ describe("Workflows API", () => {
   });
 
   it("runs a workflow successfully", async () => {
-    const app = buildApp();
+    const app = buildTestApp();
 
     const createResponse = await app.inject({
       method: "POST",
@@ -106,7 +123,7 @@ describe("Workflows API", () => {
   });
 
   it("handles a failed workflow execution", async () => {
-    const app = buildApp();
+    const app = buildTestApp();
 
     const createResponse = await app.inject({
       method: "POST",
@@ -142,7 +159,7 @@ describe("Workflows API", () => {
   });
 
   it("returns 404 when a workflow does not exist", async () => {
-    const app = buildApp();
+    const app = buildTestApp();
 
     const response = await app.inject({
       method: "GET",
@@ -155,7 +172,7 @@ describe("Workflows API", () => {
   });
 
   it("returns 404 when running an unknown workflow", async () => {
-    const app = buildApp();
+    const app = buildTestApp();
 
     const response = await app.inject({
       method: "POST",
@@ -168,7 +185,7 @@ describe("Workflows API", () => {
   });
 
   it("validates workflow creation input", async () => {
-    const app = buildApp();
+    const app = buildTestApp();
 
     const response = await app.inject({
       method: "POST",
