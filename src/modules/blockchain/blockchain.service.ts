@@ -38,6 +38,10 @@ export class BlockchainService {
     return keccak256(toHex(workflowId));
   }
 
+  async checkConnection(): Promise<void> {
+    await this.publicClient.getBlockNumber();
+  }
+
   async registerWorkflow(workflowId: string) {
     const blockchainId = this.workflowIdToBytes32(workflowId);
 
