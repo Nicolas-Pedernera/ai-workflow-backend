@@ -81,3 +81,53 @@ describe("WorkflowService blockchain integration", () => {
     expect(repository.saveWorkflow).not.toHaveBeenCalled();
   });
 });
+
+describe("WorkflowService blockchain errors", () => {
+  it("propagates a controlled blockchain workflow not found error", async () => {
+    const repository = {
+      findWorkflowById: vi.fn(async () => ({
+        id: "wf_existing",
+        name: "Existing workflow",
+        description: "",
+        status: "active",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        blockchainId: "0x123",
+        blockchainTransactionHash: "0x456"
+      }))
+    };
+
+    const aiProvider = {
+      generate: vi.fn()
+    };
+
+    const blockchain = {
+      getWorkflow: vi.fn(async () => {
+        const error = new Error(
+          "Workflow wf_existing not found on blockchain"
+        );
+        Object.assign(error, {
+          name: "BlockchainWorkflowNotFoundError",
+          statusCode: 404
+        });
+        throw error;
+      })
+    };
+
+    const service = new WorkflowService(
+      repository as never,
+      aiProvider as never,
+      blockchain as never
+    );
+
+    await expect(
+      service.getBlockchainWorkflow("wf_existing")
+    ).rejects.toMatchObject({
+      name: "BlockchainWorkflowNotFoundError",
+      statusCode: 404
+    });
+
+    expect(repository.findWorkflowById).toHaveBeenCalledWith("wf_existing");
+    expect(blockchain.getWorkflow).toHaveBeenCalledWith("wf_existing");
+  });
+});

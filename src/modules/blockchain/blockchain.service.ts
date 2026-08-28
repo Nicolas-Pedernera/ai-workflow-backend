@@ -9,6 +9,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { hardhat } from "viem/chains";
 import { blockchainConfig } from "../../config/blockchain.js";
 import { workflowRegistryAbi } from "./workflow-registry.abi.js";
+import { BlockchainWorkflowNotFoundError } from "./blockchain.errors.js";
 
 export class BlockchainService {
   private readonly account;
@@ -56,18 +57,29 @@ export class BlockchainService {
   async getWorkflow(workflowId: string) {
     const blockchainId = this.workflowIdToBytes32(workflowId);
 
-    const workflow = await this.publicClient.readContract({
-      address: this.contractAddress,
-      abi: workflowRegistryAbi,
-      functionName: "getWorkflow",
-      args: [blockchainId]
-    });
+    try {
+      const workflow = await this.publicClient.readContract({
+        address: this.contractAddress,
+        abi: workflowRegistryAbi,
+        functionName: "getWorkflow",
+        args: [blockchainId]
+      });
 
-    return {
-      workflowId: workflow.workflowId,
-      owner: workflow.owner,
-      active: workflow.active,
-      createdAt: workflow.createdAt.toString()
-    };
+      return {
+        workflowId: workflow.workflowId,
+        owner: workflow.owner,
+        active: workflow.active,
+        createdAt: workflow.createdAt.toString()
+      };
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Workflow not found")
+      ) {
+        throw new BlockchainWorkflowNotFoundError(workflowId);
+      }
+
+      throw error;
+    }
   }
 }
