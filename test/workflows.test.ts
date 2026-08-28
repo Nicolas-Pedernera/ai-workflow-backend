@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import { WorkflowService } from "../src/modules/workflows/workflow.service.js";
+import { BlockchainService } from "../src/modules/blockchain/blockchain.service.js";
 
 describe("Workflows API", () => {
   function buildTestApp() {
@@ -14,7 +15,7 @@ describe("Workflows API", () => {
     const workflowService = new WorkflowService(
       undefined,
       undefined,
-      blockchain as any
+      blockchain as unknown as BlockchainService
     );
 
     return buildApp(workflowService);

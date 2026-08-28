@@ -1,15 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
 import { WorkflowService } from "../src/modules/workflows/workflow.service.js";
+import type { Workflow } from "../src/modules/workflows/workflow.types.js";
+import type { AIProvider } from "../src/providers/ai/ai-provider.js";
+import { WorkflowRepository } from "../src/modules/workflows/workflow.repository.js";
+import { BlockchainService } from "../src/modules/blockchain/blockchain.service.js";
 
 describe("WorkflowService blockchain integration", () => {
   it("registers a workflow on-chain and persists blockchain data", async () => {
     const repository = {
-      saveWorkflow: vi.fn(async (workflow) => workflow)
-    };
+      saveWorkflow: vi.fn(async (workflow: Workflow) => workflow)
+    } as unknown as WorkflowRepository;
 
     const aiProvider = {
       generate: vi.fn()
-    };
+    } as unknown as AIProvider;
 
     const blockchain = {
       registerWorkflow: vi.fn(async () => ({
@@ -18,12 +22,12 @@ describe("WorkflowService blockchain integration", () => {
         transactionHash:
           "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd"
       }))
-    };
+    } as unknown as BlockchainService;
 
     const service = new WorkflowService(
-      repository as any,
-      aiProvider as any,
-      blockchain as any
+      repository,
+      aiProvider,
+      blockchain
     );
 
     const workflow = await service.create({
@@ -45,27 +49,26 @@ describe("WorkflowService blockchain integration", () => {
       "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd"
     );
   });
-});
 
   it("does not persist the workflow when blockchain registration fails", async () => {
     const repository = {
-      saveWorkflow: vi.fn(async (workflow) => workflow)
-    };
+      saveWorkflow: vi.fn(async (workflow: Workflow) => workflow)
+    } as unknown as WorkflowRepository;
 
     const aiProvider = {
       generate: vi.fn()
-    };
+    } as unknown as AIProvider;
 
     const blockchain = {
       registerWorkflow: vi.fn(async () => {
         throw new Error("Blockchain registration failed");
       })
-    };
+    } as unknown as BlockchainService;
 
     const service = new WorkflowService(
-      repository as any,
-      aiProvider as any,
-      blockchain as any
+      repository,
+      aiProvider,
+      blockchain
     );
 
     await expect(
@@ -77,3 +80,4 @@ describe("WorkflowService blockchain integration", () => {
     expect(blockchain.registerWorkflow).toHaveBeenCalledTimes(1);
     expect(repository.saveWorkflow).not.toHaveBeenCalled();
   });
+});
