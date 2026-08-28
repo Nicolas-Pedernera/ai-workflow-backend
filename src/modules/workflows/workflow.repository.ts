@@ -20,22 +20,28 @@ export class WorkflowRepository {
         description,
         status,
         created_at,
-        updated_at
+        updated_at,
+        blockchain_id,
+        blockchain_transaction_hash
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (id)
       DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
         status = EXCLUDED.status,
-        updated_at = EXCLUDED.updated_at`,
+        updated_at = EXCLUDED.updated_at,
+        blockchain_id = EXCLUDED.blockchain_id,
+        blockchain_transaction_hash = EXCLUDED.blockchain_transaction_hash`,
       [
         workflow.id,
         workflow.name,
         workflow.description,
         workflow.status,
         workflow.createdAt,
-        workflow.updatedAt
+        workflow.updatedAt,
+        workflow.blockchainId,
+        workflow.blockchainTransactionHash
       ]
     );
 
@@ -50,7 +56,9 @@ export class WorkflowRepository {
         description,
         status,
         created_at,
-        updated_at
+        updated_at,
+        blockchain_id,
+        blockchain_transaction_hash
       FROM workflows
       ORDER BY created_at ASC`
     );
@@ -61,7 +69,9 @@ export class WorkflowRepository {
       description: row.description,
       status: row.status,
       createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString()
+      updatedAt: row.updated_at.toISOString(),
+      blockchainId: row.blockchain_id,
+      blockchainTransactionHash: row.blockchain_transaction_hash
     }));
   }
 
@@ -73,7 +83,9 @@ export class WorkflowRepository {
         description,
         status,
         created_at,
-        updated_at
+        updated_at,
+        blockchain_id,
+        blockchain_transaction_hash
       FROM workflows
       WHERE id = $1`,
       [id]
@@ -91,7 +103,9 @@ export class WorkflowRepository {
       description: row.description,
       status: row.status,
       createdAt: row.created_at.toISOString(),
-      updatedAt: row.updated_at.toISOString()
+      updatedAt: row.updated_at.toISOString(),
+      blockchainId: row.blockchain_id,
+      blockchainTransactionHash: row.blockchain_transaction_hash
     };
   }
 

@@ -1,5 +1,6 @@
 import "dotenv/config";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
 import pg from "pg";
 
 const { Pool } = pg;
@@ -15,14 +16,24 @@ const pool = new Pool({
 });
 
 try {
-  const migration = await readFile(
-    new URL("../migrations/001_create_workflows.sql", import.meta.url),
-    "utf8"
-  );
+  const migrationsDirectory = new URL("../migrations/", import.meta.url);
 
-  await pool.query(migration);
+  const files = (await readdir(migrationsDirectory))
+    .filter((file) => file.endsWith(".sql"))
+    .sort();
 
-  console.log("Database migration completed successfully.");
+  for (const file of files) {
+    console.log(`Running migration: ${file}`);
+
+    const migration = await readFile(
+      join(migrationsDirectory.pathname, file),
+      "utf8"
+    );
+
+    await pool.query(migration);
+  }
+
+  console.log("Database migrations completed successfully.");
 } finally {
   await pool.end();
 }

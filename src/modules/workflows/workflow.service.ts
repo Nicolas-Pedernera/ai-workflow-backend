@@ -37,7 +37,9 @@ export class WorkflowService {
       description: input.description ?? "",
       status: "active",
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      blockchainId: null,
+      blockchainTransactionHash: null
     };
 
     return await this.repository.saveWorkflow(workflow);

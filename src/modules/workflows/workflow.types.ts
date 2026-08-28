@@ -13,6 +13,8 @@ export interface Workflow {
   status: WorkflowStatus;
   createdAt: string;
   updatedAt: string;
+  blockchainId: string | null;
+  blockchainTransactionHash: string | null;
 }
 
 export interface WorkflowRun {
