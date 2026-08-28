@@ -58,6 +58,20 @@ export class BlockchainService {
     };
   }
 
+  async setWorkflowStatus(
+    workflowId: string,
+    active: boolean
+  ): Promise<string> {
+    const blockchainId = this.workflowIdToBytes32(workflowId);
+
+    return await this.walletClient.writeContract({
+      address: this.contractAddress,
+      abi: workflowRegistryAbi,
+      functionName: "setWorkflowStatus",
+      args: [blockchainId, active]
+    });
+  }
+
   async getWorkflow(workflowId: string) {
     const blockchainId = this.workflowIdToBytes32(workflowId);
 

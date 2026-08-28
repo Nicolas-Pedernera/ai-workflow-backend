@@ -159,6 +159,78 @@ describe("Workflows API", () => {
     await app.close();
   });
 
+  it("changes workflow status to inactive and updates blockchain", async () => {
+    const blockchain = {
+      registerWorkflow: async (workflowId: string) => ({
+        blockchainId: `0x${workflowId.replace(/[^a-f0-9]/gi, "").padEnd(64, "0").slice(0, 64)}`,
+        transactionHash: `0x${"a".repeat(64)}`
+      }),
+      setWorkflowStatus: async (_workflowId: string, _active: boolean) =>
+        `0x${"b".repeat(64)}`
+    };
+
+    const workflowService = new WorkflowService(
+      undefined,
+      undefined,
+      blockchain as unknown as BlockchainService
+    );
+
+    const app = buildApp(workflowService);
+
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/api/v1/workflows",
+      payload: {
+        name: "Status lifecycle test"
+      }
+    });
+
+    const workflowId = createResponse.json().data.id;
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/workflows/${workflowId}/status`,
+      payload: {
+        status: "inactive"
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data.status).toBe("inactive");
+
+    await app.close();
+  });
+
+  it("rejects an invalid workflow status", async () => {
+    const app = buildTestApp();
+
+    const createResponse = await app.inject({
+      method: "POST",
+      url: "/api/v1/workflows",
+      payload: {
+        name: "Invalid status test"
+      }
+    });
+
+    const workflowId = createResponse.json().data.id;
+
+    const response = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/workflows/${workflowId}/status`,
+      payload: {
+        status: "paused"
+      }
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      status: "error",
+      error: "Validation Error"
+    });
+
+    await app.close();
+  });
+
   it("returns 404 when a workflow does not exist", async () => {
     const app = buildTestApp();
 

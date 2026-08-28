@@ -116,6 +116,26 @@ export class WorkflowService {
     }
   }
 
+  async setStatus(
+    workflowId: string,
+    status: "active" | "inactive"
+  ): Promise<Workflow | undefined> {
+    const workflow = await this.repository.findWorkflowById(workflowId);
+
+    if (!workflow) {
+      return undefined;
+    }
+
+    const active = status === "active";
+
+    await this.blockchain.setWorkflowStatus(workflowId, active);
+
+    workflow.status = status;
+    workflow.updatedAt = new Date().toISOString();
+
+    return await this.repository.saveWorkflow(workflow);
+  }
+
   async getBlockchainWorkflow(workflowId: string) {
     const workflow = await this.repository.findWorkflowById(workflowId);
 

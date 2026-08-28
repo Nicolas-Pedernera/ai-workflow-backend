@@ -67,6 +67,38 @@ export function registerWorkflowRoutes(
     };
   });
 
+  app.patch<{
+    Params: { id: string };
+    Body: { status?: unknown };
+  }>("/api/v1/workflows/:id/status", async (request, reply) => {
+    const body = request.body ?? {};
+
+    if (body.status !== "active" && body.status !== "inactive") {
+      return reply.status(400).send({
+        status: "error",
+        error: "Validation Error",
+        message: "status must be either active or inactive"
+      });
+    }
+
+    const workflow = await workflowService.setStatus(
+      request.params.id,
+      body.status
+    );
+
+    if (!workflow) {
+      return reply.status(404).send({
+        status: "error",
+        error: "Not Found",
+        message: "Workflow not found"
+      });
+    }
+
+    return {
+      data: workflow
+    };
+  });
+
   app.get<{
     Params: { id: string };
   }>("/api/v1/workflows/:id/blockchain", async (request, reply) => {
