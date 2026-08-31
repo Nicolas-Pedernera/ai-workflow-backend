@@ -1,14 +1,34 @@
 # AI Workflow Backend
 
-Production-oriented backend for AI workflow orchestration, automation, REST APIs, and intelligent agent systems — with on-chain workflow registration on an EVM-compatible network.
+AI-assisted risk and liquidation alerting engine for leveraged trading positions, with an immutable on-chain audit trail for every workflow executed.
 
 ## Overview
 
-This project is a TypeScript backend designed around workflow creation, execution, persistence, and AI provider abstraction. It also integrates a Solidity smart contract that registers workflow ownership and status on-chain, bridging the off-chain application state with an on-chain source of truth.
+This project is a TypeScript backend built to run automated risk workflows on trading positions: feed in position data (collateral, price, liquidation ratio), have an AI provider analyze the risk and draft a human-readable alert, and register that workflow on-chain so the alert's existence is auditable and cannot be altered after the fact.
+
+It combines three things that are rarely found together in a single, understandable codebase: a real AI provider abstraction (not a black box), workflow orchestration with persistent state, and an EVM smart contract that gives every workflow an immutable on-chain record. This is the backend layer that a project like [MarginVault](https://github.com/Nicolas-Pedernera/MarginVault) would sit on top of in production.
 
 The architecture focuses on clear separation of responsibilities, persistent application state, testability, and extensibility for future AI providers and workflow execution strategies.
 
 The project is actively developed as part of my engineering portfolio and demonstrates practical backend architecture using Node.js, Fastify, PostgreSQL, TypeScript, Solidity, and automated testing.
+
+## Use Case: Liquidation Risk Alerts
+
+A workflow represents a recurring risk check. When you run it with position data, the AI provider evaluates the risk and returns a plain-language alert — and the run is persisted with the exact input, output, and timestamps, while the workflow itself carries an on-chain registration hash.
+
+```bash
+# 1. Create a workflow
+curl -X POST http://localhost:3000/api/v1/workflows \
+  -H "Content-Type: application/json" \
+  -d '{"name": "eth-margin-risk-check"}'
+
+# 2. Run it against a position snapshot
+curl -X POST http://localhost:3000/api/v1/workflows/<id>/run \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"prompt": "Position: 2.5 ETH collateral, 4000 USDC borrowed, liquidation price $1850, current price $1920. Assess liquidation risk in one sentence."}}'
+```
+
+The response includes the AI-generated risk assessment alongside the run's audit trail (`createdAt`, `startedAt`, `completedAt`) and the workflow's on-chain `blockchainTransactionHash`. Today this is a manual trigger; the natural next step (see [Roadmap](#roadmap)) is wiring it to a scheduler or webhook so it runs automatically as prices move.
 
 ## Architecture
 
@@ -40,8 +60,9 @@ PostgreSQL           AI Provider(s)      WorkflowRegistry.sol (EVM)
 - SQL migrations tracked in version control and applied via a migration runner script
 - Repository pattern for data access
 - Service layer for business logic
-- AI provider abstraction
-- Mock AI provider for development and testing
+- AI provider abstraction, selectable via `AI_PROVIDER` env var
+- Real AI providers: Anthropic (Claude API) and Ollama (local, no API key required)
+- Mock AI provider for fast, deterministic tests
 - On-chain workflow registration via a Solidity smart contract
 - Blockchain service layer built on viem
 - Isolated test database with automatic cleanup between tests
@@ -87,6 +108,8 @@ src/
     └── ai/
         ├── ai-provider.factory.ts
         ├── ai-provider.ts
+        ├── anthropic-ai-provider.ts
+        ├── ollama-ai-provider.ts
         └── mock-ai-provider.ts
 
 test/
@@ -103,7 +126,17 @@ Create Workflow -> Persist Workflow -> Register On-Chain (optional) -> Execute W
 
 ## AI Provider Abstraction
 
-AI integrations are isolated behind an explicit provider interface. This avoids coupling the workflow engine to a specific AI vendor and allows providers to be replaced or extended independently.
+AI integrations are isolated behind an explicit provider interface (`generate(input: string): Promise<string>`). This avoids coupling the workflow engine to a specific AI vendor and allows providers to be replaced or extended independently.
+
+The active provider is selected with the `AI_PROVIDER` env var:
+
+| Value | Provider | Requirements |
+|---|---|---|
+| `mock` (default) | Deterministic mock, no external calls | None |
+| `anthropic` | Claude API via `@anthropic-ai/sdk` | `ANTHROPIC_API_KEY` |
+| `ollama` | Local inference via [Ollama](https://ollama.com) | Ollama running locally, no API key |
+
+For local development without any API costs: `ollama pull llama3.2`, set `AI_PROVIDER=ollama`, and the workflow engine talks to a real model running on your machine.
 
 ## Blockchain Integration
 
