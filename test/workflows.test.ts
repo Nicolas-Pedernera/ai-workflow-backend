@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import { WorkflowService } from "../src/modules/workflows/workflow.service.js";
 import { BlockchainService } from "../src/modules/blockchain/blockchain.service.js";
+import { MockAIProvider } from "../src/providers/ai/mock-ai-provider.js";
 
 describe("Workflows API", () => {
   function buildTestApp() {
@@ -14,7 +15,7 @@ describe("Workflows API", () => {
 
     const workflowService = new WorkflowService(
       undefined,
-      undefined,
+      new MockAIProvider(),
       blockchain as unknown as BlockchainService
     );
 
@@ -165,13 +166,16 @@ describe("Workflows API", () => {
         blockchainId: `0x${workflowId.replace(/[^a-f0-9]/gi, "").padEnd(64, "0").slice(0, 64)}`,
         transactionHash: `0x${"a".repeat(64)}`
       }),
-      setWorkflowStatus: async (_workflowId: string, _active: boolean) =>
-        `0x${"b".repeat(64)}`
+      setWorkflowStatus: async (workflowId: string, active: boolean) => {
+        void workflowId;
+        void active;
+        return `0x${"b".repeat(64)}`;
+      }
     };
 
     const workflowService = new WorkflowService(
       undefined,
-      undefined,
+      new MockAIProvider(),
       blockchain as unknown as BlockchainService
     );
 

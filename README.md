@@ -61,7 +61,7 @@ PostgreSQL           AI Provider(s)      WorkflowRegistry.sol (EVM)
 - Repository pattern for data access
 - Service layer for business logic
 - AI provider abstraction, selectable via `AI_PROVIDER` env var
-- Real AI providers: Anthropic (Claude API) and Ollama (local, no API key required)
+- AI providers: deterministic mock for testing and Ollama for local inference
 - Mock AI provider for fast, deterministic tests
 - On-chain workflow registration via a Solidity smart contract
 - Blockchain service layer built on viem
@@ -108,7 +108,6 @@ src/
     └── ai/
         ├── ai-provider.factory.ts
         ├── ai-provider.ts
-        ├── anthropic-ai-provider.ts
         ├── ollama-ai-provider.ts
         └── mock-ai-provider.ts
 
@@ -133,7 +132,6 @@ The active provider is selected with the `AI_PROVIDER` env var:
 | Value | Provider | Requirements |
 |---|---|---|
 | `mock` (default) | Deterministic mock, no external calls | None |
-| `anthropic` | Claude API via `@anthropic-ai/sdk` | `ANTHROPIC_API_KEY` |
 | `ollama` | Local inference via [Ollama](https://ollama.com) | Ollama running locally, no API key |
 
 For local development without any API costs: `ollama pull llama3.2`, set `AI_PROVIDER=ollama`, and the workflow engine talks to a real model running on your machine.
