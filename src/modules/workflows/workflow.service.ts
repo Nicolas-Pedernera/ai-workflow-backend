@@ -8,6 +8,7 @@ import type {
 import { AIProviderFactory } from "../../providers/ai/ai-provider.factory.js";
 import type { AIProvider } from "../../providers/ai/ai-provider.js";
 import { BlockchainService } from "../blockchain/blockchain.service.js";
+import { analyzeRisk } from "../risk/risk-analyzer.js";
 
 export class WorkflowService {
   private readonly repository: WorkflowRepository;
@@ -88,10 +89,19 @@ export class WorkflowService {
         throw new Error("Workflow execution failed");
       }
 
+      const riskAnalysis = analyzeRisk(input);
+
       const prompt =
         typeof input.prompt === "string"
           ? input.prompt
-          : JSON.stringify(input);
+          : riskAnalysis
+            ? [
+                "Analyze the following deterministic risk metrics.",
+                "Do not recalculate or invent financial values.",
+                "Explain the risk clearly and concisely.",
+                JSON.stringify(riskAnalysis, null, 2)
+              ].join("\\n")
+            : JSON.stringify(input);
 
       const providerOutput = await this.aiProvider.generate(prompt);
 
@@ -99,7 +109,8 @@ export class WorkflowService {
       run.output = {
         message: providerOutput,
         workflowId,
-        processedInput: input
+        processedInput: input,
+        ...(riskAnalysis ? { riskAnalysis } : {})
       };
       run.completedAt = new Date().toISOString();
 
