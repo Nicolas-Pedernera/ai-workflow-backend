@@ -2,15 +2,23 @@ import { afterEach, describe, expect, it } from "vitest";
 import { AIProviderFactory } from "../src/providers/ai/ai-provider.factory.js";
 import { MockAIProvider } from "../src/providers/ai/mock-ai-provider.js";
 import { OllamaAIProvider } from "../src/providers/ai/ollama-ai-provider.js";
+import { OpenAICompatibleAIProvider } from "../src/providers/ai/openai-compatible-ai-provider.js";
 
 describe("AIProviderFactory", () => {
   const originalProvider = process.env.AI_PROVIDER;
+  const originalRemoteKey = process.env.REMOTE_AI_API_KEY;
 
   afterEach(() => {
     if (originalProvider === undefined) {
       delete process.env.AI_PROVIDER;
     } else {
       process.env.AI_PROVIDER = originalProvider;
+    }
+
+    if (originalRemoteKey === undefined) {
+      delete process.env.REMOTE_AI_API_KEY;
+    } else {
+      process.env.REMOTE_AI_API_KEY = originalRemoteKey;
     }
   });
 
@@ -36,6 +44,15 @@ describe("AIProviderFactory", () => {
     const provider = AIProviderFactory.create();
 
     expect(provider).toBeInstanceOf(OllamaAIProvider);
+  });
+
+  it("creates OpenAICompatibleAIProvider when configured", () => {
+    process.env.AI_PROVIDER = "remote";
+    process.env.REMOTE_AI_API_KEY = "test-key";
+
+    const provider = AIProviderFactory.create();
+
+    expect(provider).toBeInstanceOf(OpenAICompatibleAIProvider);
   });
 
   it("rejects unknown providers", () => {

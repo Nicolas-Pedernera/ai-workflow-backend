@@ -111,7 +111,7 @@ The response includes the computed `riskAnalysis` (exposure, PnL, equity, estima
 
 ## AI Provider Abstraction
 
-AI integrations are isolated behind an explicit provider interface (`generate(input: string): Promise<string>`), so the workflow engine is not coupled to a specific AI vendor.
+AI integrations are isolated behind an explicit provider interface (`generate(input: string): Promise<string>`), so the workflow engine is not coupled to a specific AI vendor. In every case, the provider only ever receives the deterministic metrics already computed by the risk engine — it explains numbers, it never produces them.
 
 The active provider is selected with the `AI_PROVIDER` env var:
 
@@ -119,6 +119,14 @@ The active provider is selected with the `AI_PROVIDER` env var:
 |---|---|---|
 | `mock` (default) | Deterministic mock, no external calls | None |
 | `ollama` | Local inference via [Ollama](https://ollama.com) | Ollama running locally, no API key |
+| `remote` | Any OpenAI-compatible API (OpenAI, Groq, OpenRouter, DeepSeek, etc.) | `REMOTE_AI_API_KEY` |
+
+**Why both a local and a remote option:** they solve different problems, not the same problem twice.
+
+- `ollama` keeps every prompt and response on the machine running the backend. No position data, financial figures, or risk assessments ever leave the local network — relevant if the workflow is processing data a company doesn't want sent to a third party.
+- `remote` trades that privacy for the throughput, latency, and model quality of a hosted provider, which matters once a workload needs to run reliably in production at scale.
+
+Since the provider only ever sees already-computed numbers to explain, switching between `ollama` and `remote` is a configuration change, not an architectural one.
 
 For local development without any API costs: `ollama pull llama3.2`, set `AI_PROVIDER=ollama`.
 
