@@ -1,15 +1,11 @@
 import "dotenv/config";
 
 const rpcUrl = process.env.BLOCKCHAIN_RPC_URL;
-const privateKey = process.env.BLOCKCHAIN_PRIVATE_KEY;
 const contractAddress = process.env.WORKFLOW_REGISTRY_ADDRESS;
+const privateKey = process.env.BLOCKCHAIN_PRIVATE_KEY;
 
 if (!rpcUrl) {
   throw new Error("BLOCKCHAIN_RPC_URL is not configured");
-}
-
-if (!privateKey) {
-  throw new Error("BLOCKCHAIN_PRIVATE_KEY is not configured");
 }
 
 if (!contractAddress) {
@@ -18,6 +14,8 @@ if (!contractAddress) {
 
 export const blockchainConfig = {
   rpcUrl,
-  privateKey: privateKey as `0x${string}`,
-  contractAddress: contractAddress as `0x${string}`
+  contractAddress: contractAddress as `0x${string}`,
+  privateKey: privateKey
+    ? (privateKey as `0x${string}`)
+    : undefined
 };

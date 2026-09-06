@@ -18,20 +18,34 @@ export class BlockchainService {
   private readonly contractAddress;
 
   constructor() {
-    this.account = privateKeyToAccount(blockchainConfig.privateKey);
+    this.account = blockchainConfig.privateKey
+      ? privateKeyToAccount(blockchainConfig.privateKey)
+      : undefined;
 
     this.publicClient = createPublicClient({
       chain: hardhat,
       transport: http(blockchainConfig.rpcUrl)
     });
 
-    this.walletClient = createWalletClient({
-      account: this.account,
-      chain: hardhat,
-      transport: http(blockchainConfig.rpcUrl)
-    });
+    this.walletClient = this.account
+      ? createWalletClient({
+          account: this.account,
+          chain: hardhat,
+          transport: http(blockchainConfig.rpcUrl)
+        })
+      : undefined;
 
     this.contractAddress = blockchainConfig.contractAddress;
+  }
+
+  private requireWalletClient() {
+    if (!this.walletClient) {
+      throw new Error(
+        "BLOCKCHAIN_PRIVATE_KEY is required for blockchain write operations"
+      );
+    }
+
+    return this.walletClient;
   }
 
   workflowIdToBytes32(workflowId: string): `0x${string}` {
@@ -45,7 +59,9 @@ export class BlockchainService {
   async registerWorkflow(workflowId: string) {
     const blockchainId = this.workflowIdToBytes32(workflowId);
 
-    const hash = await this.walletClient.writeContract({
+    const walletClient = this.requireWalletClient();
+
+    const hash = await walletClient.writeContract({
       address: this.contractAddress,
       abi: workflowRegistryAbi,
       functionName: "registerWorkflow",
@@ -64,7 +80,9 @@ export class BlockchainService {
   ): Promise<string> {
     const blockchainId = this.workflowIdToBytes32(workflowId);
 
-    return await this.walletClient.writeContract({
+    const walletClient = this.requireWalletClient();
+
+    return await walletClient.writeContract({
       address: this.contractAddress,
       abi: workflowRegistryAbi,
       functionName: "setWorkflowStatus",
