@@ -1,180 +1,150 @@
+<p align="center">
+  <img src=".github/assets/banner.svg" alt="AI Workflow Backend banner" width="100%" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white" alt="Node >=18" />
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Fastify-black?logo=fastify&logoColor=white" alt="Fastify" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/tests-vitest-6E9F18?logo=vitest&logoColor=white" alt="Vitest" />
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
+</p>
+
 # AI Workflow Backend
 
-AI-assisted risk and liquidation alerting backend for leveraged trading workflows, combining deterministic financial calculations, AI-generated explanations, persistent execution state, and blockchain-backed workflow registration.
+Backend orientado a producción para orquestación de workflows de IA: creación, ejecución, persistencia y abstracción de proveedores de IA, expuesto vía una API REST.
 
-Built with **TypeScript, Fastify, PostgreSQL, Ollama, Solidity, viem, Hardhat, and Vitest**.
+## Tabla de contenidos
 
-![Live run proof](docs/proof-card.png)
-
+- [Overview](#overview)
+- [Arquitectura](#arquitectura)
+- [Features principales](#features-principales)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Ciclo de vida de un workflow](#ciclo-de-vida-de-un-workflow)
+- [Abstracción de proveedores de IA](#abstracción-de-proveedores-de-ia)
+- [API](#api)
+- [Stack tecnológico](#stack-tecnológico)
+- [Desarrollo local](#desarrollo-local)
+- [Checks de calidad](#checks-de-calidad)
+- [Principios de ingeniería](#principios-de-ingeniería)
+- [Roadmap](#roadmap)
+- [Contribuir](#contribuir)
+- [Licencia](#licencia)
+- [Autor](#autor)
 
 ## Overview
 
-This project demonstrates a modular backend architecture for executing AI-assisted workflows against structured financial data.
+Backend en TypeScript diseñado en torno a la creación, ejecución, persistencia y abstracción de proveedores de IA para workflows. La arquitectura prioriza separación de responsabilidades, estado persistente de la aplicación, testeabilidad y extensibilidad para futuros proveedores de IA y estrategias de ejecución.
 
-The current use case focuses on **liquidation risk analysis for leveraged trading positions**.
+Desarrollado activamente como parte de mi portfolio de ingeniería, demostrando arquitectura backend práctica con Node.js, Fastify, PostgreSQL, TypeScript y testing automatizado.
 
-A workflow can:
+## Arquitectura
 
-1. Receive structured trading position data.
-2. Calculate deterministic risk metrics.
-3. Send those metrics to an AI provider.
-4. Generate a human-readable risk assessment.
-5. Persist the workflow execution in PostgreSQL.
-6. Maintain workflow lifecycle state.
-7. Register workflows on-chain through an EVM-compatible smart contract.
+<p align="center">
+  <img src=".github/assets/architecture-diagram.svg" alt="Diagrama de arquitectura: REST API -> Workflow Routes -> Workflow Service -> Repository/AI Provider -> PostgreSQL/AI Provider(s)" width="100%" />
+</p>
 
-The deterministic risk engine is intentionally separated from the AI layer so that financial calculations do not depend on the language model.
+## Features principales
 
----
+| Área | Detalle |
+|---|---|
+| API | REST API construida con Fastify |
+| Tipado | Codebase 100% TypeScript |
+| Workflows | Creación, recuperación y ciclo de ejecución |
+| Persistencia | PostgreSQL con patrón Repository |
+| Dominio | Capa de servicio para lógica de negocio |
+| IA | Abstracción de proveedores + mock provider para dev/testing |
+| Testing | Tests automatizados de API con Vitest |
+| Calidad | Linting con ESLint |
+| Build | Build de producción en TypeScript |
+| Infra | Entorno de desarrollo con Docker Compose |
 
-## Architecture
+## Estructura del proyecto
 
-```text
-Client / API
-     |
-     v
-+----------------------+
-|     Fastify API      |
-|    REST Endpoints    |
-+----------+-----------+
-           |
-           v
-+----------------------+
-|   WorkflowService    |
-|    Orchestration     |
-+----+-------------+---+
-     |             |
-     |             v
-     |     +----------------------+
-     |     | Deterministic Risk   |
-     |     |      Analyzer        |
-     |     |                      |
-     |     | Exposure             |
-     |     | Price Change         |
-     |     | PnL                  |
-     |     | Equity               |
-     |     | Liquidation Price    |
-     |     | Risk Level            |
-     |     +----------+-----------+
-     |                |
-     |                v
-     |     +----------------------+
-     |     |     AI Provider      |
-     |     |                      |
-     |     | Ollama / Mock        |
-     |     +----------+-----------+
-     |                |
-     |                v
-     |        Risk Assessment
-     |
-     v
-+----------------------+
-|      PostgreSQL      |
-|  Workflows + Runs    |
-+----------------------+
+```
+src/
+├── app.ts
+├── server.ts
+├── config/
+│   └── database.ts
+├── modules/
+│   └── workflows/
+│       ├── workflow.repository.ts
+│       ├── workflow.routes.ts
+│       ├── workflow.service.ts
+│       └── workflow.types.ts
+└── providers/
+    └── ai/
+        ├── ai-provider.factory.ts
+        ├── ai-provider.ts
+        └── mock-ai-provider.ts
 
-           |
-           v
-+----------------------+
-|   WorkflowRegistry   |
-|    Solidity / EVM    |
-+----------------------+
+test/
+├── app.test.ts
+└── workflows.test.ts
+```
 
----
+## Ciclo de vida de un workflow
 
-## Use Case: Liquidation Risk Alerts
+```
+Create Workflow → Persist Workflow → Execute Workflow → Create Run → Track Execution State
+```
 
-A workflow can be run against a leveraged trading position. The backend calculates the deterministic risk metrics first, then asks the AI provider to explain them in plain language — the model never invents the numbers, it only interprets ones already computed.
+## Abstracción de proveedores de IA
+
+Las integraciones de IA están aisladas detrás de una interfaz de proveedor explícita. Esto evita acoplar el motor de workflows a un vendor específico de IA y permite reemplazar o extender proveedores de forma independiente.
+
+## API
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| `GET` | `/health` | Health check del servicio |
+| `GET` | `/api/v1/status` | Estado general de la API |
+| `POST` | `/api/v1/workflows` | Crea un nuevo workflow |
+| `GET` | `/api/v1/workflows` | Lista todos los workflows |
+| `GET` | `/api/v1/workflows/:id` | Obtiene un workflow por id |
+| `POST` | `/api/v1/workflows/:id/run` | Ejecuta un workflow |
+| `GET` | `/api/v1/runs/:id` | Consulta el estado de una ejecución |
+
+<details>
+<summary>Ejemplo: crear y ejecutar un workflow (curl)</summary>
 
 ```bash
-# 1. Create a workflow
+# Crear un workflow
 curl -X POST http://localhost:3000/api/v1/workflows \
   -H "Content-Type: application/json" \
-  -d '{"name": "eth-margin-risk-check"}'
+  -d '{"name": "example-workflow"}'
 
-# 2. Run it against a position
-curl -X POST http://localhost:3000/api/v1/workflows/<id>/run \
-  -H "Content-Type: application/json" \
-  -d '{
-    "input": {
-      "asset": "ETH",
-      "position": "long",
-      "entryPrice": 3200,
-      "currentPrice": 2850,
-      "leverage": 5,
-      "collateral": 1000
-    }
-  }'
+# Ejecutarlo
+curl -X POST http://localhost:3000/api/v1/workflows/<id>/run
+
+# Consultar la ejecución
+curl http://localhost:3000/api/v1/runs/<runId>
 ```
 
-The response includes the computed `riskAnalysis` (exposure, PnL, equity, estimated liquidation price, risk level) alongside the AI-generated explanation, the run's audit trail, and the workflow's on-chain `blockchainTransactionHash`.
+</details>
 
-## AI Provider Abstraction
+## Stack tecnológico
 
-AI integrations are isolated behind an explicit provider interface (`generate(input: string): Promise<string>`), so the workflow engine is not coupled to a specific AI vendor. In every case, the provider only ever receives the deterministic metrics already computed by the risk engine — it explains numbers, it never produces them.
+- Node.js
+- TypeScript
+- Fastify
+- PostgreSQL / `pg`
+- Vitest
+- ESLint
+- Docker Compose
 
-The active provider is selected with the `AI_PROVIDER` env var:
-
-| Value | Provider | Requirements |
-|---|---|---|
-| `mock` (default) | Deterministic mock, no external calls | None |
-| `ollama` | Local inference via [Ollama](https://ollama.com) | Ollama running locally, no API key |
-| `remote` | Any OpenAI-compatible API (OpenAI, Groq, OpenRouter, DeepSeek, etc.) | `REMOTE_AI_API_KEY` |
-
-**Why both a local and a remote option:** they solve different problems, not the same problem twice.
-
-- `ollama` keeps every prompt and response on the machine running the backend. No position data, financial figures, or risk assessments ever leave the local network — relevant if the workflow is processing data a company doesn't want sent to a third party.
-- `remote` trades that privacy for the throughput, latency, and model quality of a hosted provider, which matters once a workload needs to run reliably in production at scale.
-
-Since the provider only ever sees already-computed numbers to explain, switching between `ollama` and `remote` is a configuration change, not an architectural one.
-
-For local development without any API costs: `ollama pull llama3.2`, set `AI_PROVIDER=ollama`.
-
-## API Endpoints
-
-```http
-GET    /health
-GET    /health/ready
-GET    /api/v1/status
-
-GET    /api/v1/workflows
-POST   /api/v1/workflows
-GET    /api/v1/workflows/:id
-PATCH  /api/v1/workflows/:id/status
-GET    /api/v1/workflows/:id/blockchain
-POST   /api/v1/workflows/:id/run
-
-GET    /api/v1/runs/:id
-```
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js |
-| Language | TypeScript |
-| HTTP API | Fastify |
-| Database | PostgreSQL |
-| AI | Ollama / Llama 3.2 |
-| Blockchain | Solidity / EVM |
-| Blockchain client | viem |
-| Smart contract tooling | Hardhat |
-| Testing | Vitest |
-| Linting | ESLint |
-
-## Local Development
+## Desarrollo local
 
 ```bash
 npm install
 cp .env.example .env
 docker compose up -d
-npm run db:migrate
 npm run dev
 ```
 
-The API runs on `http://localhost:3000`.
-
-## Testing
+## Checks de calidad
 
 ```bash
 npm run build
@@ -182,34 +152,49 @@ npm test
 npm run lint
 ```
 
-Current test status: **6 test files passed / 29 tests passed**.
+Estado actual de tests: **2 archivos de test / 10 tests pasando**.
 
-## Limitations
+## Principios de ingeniería
 
-This is a portfolio and educational project, not a production trading or liquidation engine. The risk model is intentionally simplified — it excludes maintenance margin, trading fees, funding, slippage, and exchange-specific liquidation rules — and should not be used to make real financial decisions.
+- Separación de responsabilidades
+- Tipado fuerte
+- Límites de dominio explícitos
+- Persistencia basada en Repository
+- Abstracción de proveedores de IA
+- Lógica de negocio testeable
+- Estado de aplicación persistente
+- Límites de API claros
 
 ## Roadmap
 
-- [ ] Authentication and API keys
-- [ ] Scheduled / webhook-triggered workflow execution
-- [ ] Real-time market data integration
-- [ ] Additional AI providers
-- [ ] Workflow execution history and analytics
-- [ ] OpenAPI documentation
-- [ ] Rate limiting and observability
+- [ ] Ejecución asíncrona de workflows
+- [ ] Procesamiento de jobs en background
+- [ ] Cache con Redis
+- [ ] Ejecución de workflows basada en eventos
+- [ ] Proveedores de IA adicionales
+- [ ] Procesamiento de webhooks
+- [ ] Autenticación y autorización
+- [ ] Observabilidad y métricas
+- [ ] Rate limiting
+- [ ] Ejecución distribuida
+- [ ] Automatización de despliegue a producción
 
-## License
+## Contribuir
 
-MIT
+Las contribuciones son bienvenidas. Ver [CONTRIBUTING.md](CONTRIBUTING.md) para la guía de estilo, cómo correr los checks de calidad antes de un PR, y las convenciones del proyecto.
 
-## Author
+## Licencia
+
+Distribuido bajo licencia MIT. Ver [LICENSE](LICENSE).
+
+## Autor
 
 **Nicolás Pedernera**
 
 Systems Engineer — Universidad de Buenos Aires, 2024
 
-Focused on backend engineering, fintech, cryptocurrency, blockchain infrastructure, and AI systems.
+Enfocado en backend engineering, fintech, criptomonedas, infraestructura blockchain y sistemas de IA.
 
-GitHub: https://github.com/Nicolas-Pedernera
-LinkedIn: https://www.linkedin.com/in/nicolas-pedernera-zendx/
-Upwork: https://www.upwork.com/freelancers/~017eec2171ae9d8805
+- GitHub: [Nicolas-Pedernera](https://github.com/Nicolas-Pedernera)
+- LinkedIn: [nicolas-pedernera-zendx](https://www.linkedin.com/in/nicolas-pedernera-zendx/)
+- Upwork: [perfil de freelancer](https://www.upwork.com/freelancers/~017eec2171ae9d8805)

@@ -1,0 +1,56 @@
+<svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dtitle ddesc">
+  <title id="dtitle">Diagrama de arquitectura</title>
+  <desc id="ddesc">REST API con Fastify hacia Workflow Routes, Workflow Service, y desde ahí a Workflow Repository con PostgreSQL y a la abstracción de proveedores de IA.</desc>
+  <rect width="900" height="620" fill="#0b1220"/>
+
+  <!-- REST API -->
+  <rect x="330" y="30" width="240" height="60" rx="8" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <text x="450" y="55" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#f8fafc" font-weight="600">REST API (Fastify)</text>
+  <text x="450" y="75" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#94a3b8">/api/v1/workflows</text>
+
+  <line x1="450" y1="90" x2="450" y2="130" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Workflow Routes -->
+  <rect x="330" y="130" width="240" height="55" rx="8" fill="none" stroke="#3b82f6" stroke-width="2"/>
+  <text x="450" y="163" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#f8fafc">Workflow Routes</text>
+
+  <line x1="450" y1="185" x2="450" y2="225" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Workflow Service -->
+  <rect x="330" y="225" width="240" height="55" rx="8" fill="none" stroke="#22c55e" stroke-width="2"/>
+  <text x="450" y="258" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#f8fafc">Workflow Service</text>
+
+  <!-- Split -->
+  <line x1="450" y1="280" x2="450" y2="310" stroke="#64748b" stroke-width="2"/>
+  <line x1="200" y1="310" x2="700" y2="310" stroke="#64748b" stroke-width="2"/>
+  <line x1="200" y1="310" x2="200" y2="345" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="700" y1="310" x2="700" y2="345" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Repository -->
+  <rect x="80" y="345" width="240" height="55" rx="8" fill="none" stroke="#f59e0b" stroke-width="2"/>
+  <text x="200" y="378" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#f8fafc">Workflow Repository</text>
+
+  <!-- AI Provider -->
+  <rect x="580" y="345" width="240" height="55" rx="8" fill="none" stroke="#f59e0b" stroke-width="2"/>
+  <text x="700" y="378" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#f8fafc">AI Provider Abstraction</text>
+
+  <line x1="200" y1="400" x2="200" y2="440" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="700" y1="400" x2="700" y2="440" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- PostgreSQL -->
+  <rect x="80" y="440" width="240" height="55" rx="8" fill="none" stroke="#38bdf8" stroke-width="2"/>
+  <text x="200" y="473" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#f8fafc">PostgreSQL</text>
+
+  <!-- AI provider impl -->
+  <rect x="580" y="440" width="240" height="55" rx="8" fill="none" stroke="#38bdf8" stroke-width="2"/>
+  <text x="700" y="465" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#f8fafc">AI Provider(s)</text>
+  <text x="700" y="482" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#94a3b8">Mock · futuros proveedores</text>
+
+  <text x="450" y="560" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#64748b">Create Workflow → Persist → Execute → Create Run → Track Execution State</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+    </marker>
+  </defs>
+</svg>

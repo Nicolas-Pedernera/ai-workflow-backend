@@ -1,46 +1,37 @@
-# Contributing
+# Contribuir a AI Workflow Backend
 
-Thank you for contributing to AI Workflow Backend.
+Gracias por tu interés en contribuir a este proyecto.
 
-## Development setup
+## Configuración del entorno
 
 ```bash
-npm ci
+npm install
+cp .env.example .env
+docker compose up -d
+npm run dev
 ```
 
-Configure `.env` using `.env.example`.
+## Antes de abrir un PR
 
-## Validation
-
-Before submitting changes:
+Corré todos los checks de calidad y asegurate de que pasen:
 
 ```bash
-npm test
 npm run build
+npm test
 npm run lint
 ```
 
-All checks should pass.
+## Convenciones del proyecto
 
-## Pull requests
+- **Separación de capas**: rutas (`*.routes.ts`) nunca contienen lógica de negocio; esa va en el service (`*.service.ts`). El acceso a datos vive únicamente en el repository (`*.repository.ts`).
+- **Tipado**: evitar `any`; los tipos de dominio van en `*.types.ts` dentro de cada módulo.
+- **Proveedores de IA**: cualquier integración nueva de IA debe implementar la interfaz definida en `providers/ai/ai-provider.ts`, nunca acoplarse directamente a un SDK externo desde el service.
+- **Tests**: todo endpoint nuevo necesita al menos un test en `test/` que cubra el caso feliz y un caso de error.
 
-Pull requests should:
+## Estilo de commits
 
-- explain the purpose of the change
-- keep changes focused
-- include tests for new behavior when appropriate
-- update documentation when behavior changes
-- never commit secrets or credentials
+Mensajes cortos y descriptivos en modo imperativo: `agrega endpoint de cancelación de workflow`, `corrige manejo de error en mock provider`.
 
-## Commit messages
+## Reportar bugs o proponer features
 
-Use clear and descriptive commit messages.
-
-Examples:
-
-```text
-feat: add workflow execution endpoint
-fix: handle missing blockchain wallet
-docs: improve deployment guide
-test: add workflow service coverage
-```
+Abrí un issue describiendo el comportamiento actual, el esperado, y pasos para reproducir si aplica.

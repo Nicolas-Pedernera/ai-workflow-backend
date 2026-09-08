@@ -1,0 +1,26 @@
+<svg viewBox="0 0 1200 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">AI Workflow Backend</title>
+  <desc id="desc">Production-oriented backend for AI workflow orchestration, built with Node.js, Fastify, TypeScript and PostgreSQL.</desc>
+  <rect width="1200" height="260" fill="#0b1220"/>
+  <g stroke="#1c2a3f" stroke-width="1">
+    <line x1="0" y1="65" x2="1200" y2="65"/>
+    <line x1="0" y1="130" x2="1200" y2="130"/>
+    <line x1="0" y1="195" x2="1200" y2="195"/>
+  </g>
+  <g fill="none" stroke="#3b82f6" stroke-width="2">
+    <rect x="70" y="90" width="120" height="80" rx="6"/>
+    <rect x="260" y="90" width="120" height="80" rx="6"/>
+    <rect x="450" y="60" width="120" height="140" rx="6" stroke="#22c55e"/>
+  </g>
+  <g stroke="#64748b" stroke-width="2">
+    <line x1="190" y1="130" x2="260" y2="130"/>
+    <line x1="380" y1="130" x2="450" y2="130"/>
+  </g>
+  <g font-family="Helvetica, Arial, sans-serif">
+    <text x="70" y="80" fill="#94a3b8" font-size="13">API</text>
+    <text x="260" y="80" fill="#94a3b8" font-size="13">SERVICE</text>
+    <text x="450" y="50" fill="#94a3b8" font-size="13">AI PROVIDER</text>
+  </g>
+  <text x="600" y="120" font-family="Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#f8fafc">AI Workflow Backend</text>
+  <text x="600" y="155" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#94a3b8">Orquestación de workflows de IA · Node.js · Fastify · TypeScript · PostgreSQL</text>
+</svg>
