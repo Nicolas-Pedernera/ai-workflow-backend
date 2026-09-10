@@ -6,12 +6,12 @@
   <a href="https://github.com/Nicolas-Pedernera/ai-workflow-backend/actions/workflows/test.yml">
     <img src="https://github.com/Nicolas-Pedernera/ai-workflow-backend/actions/workflows/test.yml/badge.svg" alt="CI status" />
   </a>
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white" alt="Node >=18" />
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Fastify-black?logo=fastify&logoColor=white" alt="Fastify" />
   <img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/tests-vitest-6E9F18?logo=vitest&logoColor=white" alt="Vitest" />
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License" />
 </p>
 
 Backend en [Fastify](https://github.com/fastify/fastify) + TypeScript para orquestación de workflows de IA, construido sobre **Clean Architecture, vertical slices y un patrón CQRS ligero**. Incluye persistencia en PostgreSQL, registro on-chain de workflows (smart contract vía `viem`) y un motor de análisis de riesgo de liquidación como capa de dominio pura.
