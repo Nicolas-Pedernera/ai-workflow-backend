@@ -1,35 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
-import type { HealthService } from "../src/modules/health/health.service.js";
+import type { DatabaseHealthPort } from "../src/modules/health/database/database-health.port.js";
+import type { BlockchainService } from "../src/modules/blockchain/client/blockchain.service.js";
 
-function createHealthService(
-  databaseStatus: "ok" | "error",
-  blockchainStatus: "ok" | "error"
-) {
+function fakeDatabase(status: "ok" | "error"): DatabaseHealthPort {
   return {
-    readiness: async () => ({
-      status:
-        databaseStatus === "ok" && blockchainStatus === "ok"
-          ? "ready"
-          : "not_ready",
-      checks: {
-        database: {
-          status: databaseStatus,
-          latencyMs: 1,
-          ...(databaseStatus === "error"
-            ? { error: "Database unavailable" }
-            : {})
-        },
-        blockchain: {
-          status: blockchainStatus,
-          latencyMs: 2,
-          ...(blockchainStatus === "error"
-            ? { error: "Blockchain unavailable" }
-            : {})
-        }
-      }
+    checkDatabase: async () => ({
+      status,
+      latencyMs: 1,
+      ...(status === "error" ? { error: "Database unavailable" } : {})
     })
-  } as unknown as HealthService;
+  };
+}
+
+function fakeBlockchain(status: "ok" | "error"): BlockchainService {
+  return {
+    checkConnection: async () => {
+      if (status === "error") {
+        throw new Error("Blockchain unavailable");
+      }
+    }
+  } as unknown as BlockchainService;
 }
 
 describe("API", () => {
@@ -51,8 +42,10 @@ describe("API", () => {
   });
 
   it("returns ready when database and blockchain are healthy", async () => {
-    const healthService = createHealthService("ok", "ok");
-    const app = buildApp(undefined, healthService);
+    const app = buildApp({
+      database: fakeDatabase("ok"),
+      blockchain: fakeBlockchain("ok")
+    });
 
     const response = await app.inject({
       method: "GET",
@@ -63,14 +56,8 @@ describe("API", () => {
     expect(response.json()).toEqual({
       status: "ready",
       checks: {
-        database: {
-          status: "ok",
-          latencyMs: 1
-        },
-        blockchain: {
-          status: "ok",
-          latencyMs: 2
-        }
+        database: { status: "ok", latencyMs: 1 },
+        blockchain: { status: "ok", latencyMs: expect.any(Number) }
       }
     });
 
@@ -78,8 +65,10 @@ describe("API", () => {
   });
 
   it("returns 503 when database is unavailable", async () => {
-    const healthService = createHealthService("error", "ok");
-    const app = buildApp(undefined, healthService);
+    const app = buildApp({
+      database: fakeDatabase("error"),
+      blockchain: fakeBlockchain("ok")
+    });
 
     const response = await app.inject({
       method: "GET",
@@ -90,13 +79,8 @@ describe("API", () => {
     expect(response.json()).toMatchObject({
       status: "not_ready",
       checks: {
-        database: {
-          status: "error",
-          error: "Database unavailable"
-        },
-        blockchain: {
-          status: "ok"
-        }
+        database: { status: "error", error: "Database unavailable" },
+        blockchain: { status: "ok" }
       }
     });
 
@@ -104,8 +88,10 @@ describe("API", () => {
   });
 
   it("returns 503 when blockchain is unavailable", async () => {
-    const healthService = createHealthService("ok", "error");
-    const app = buildApp(undefined, healthService);
+    const app = buildApp({
+      database: fakeDatabase("ok"),
+      blockchain: fakeBlockchain("error")
+    });
 
     const response = await app.inject({
       method: "GET",
@@ -116,13 +102,8 @@ describe("API", () => {
     expect(response.json()).toMatchObject({
       status: "not_ready",
       checks: {
-        database: {
-          status: "ok"
-        },
-        blockchain: {
-          status: "error",
-          error: "Blockchain unavailable"
-        }
+        database: { status: "ok" },
+        blockchain: { status: "error", error: "Blockchain unavailable" }
       }
     });
 
@@ -130,8 +111,10 @@ describe("API", () => {
   });
 
   it("returns 503 when database and blockchain are unavailable", async () => {
-    const healthService = createHealthService("error", "error");
-    const app = buildApp(undefined, healthService);
+    const app = buildApp({
+      database: fakeDatabase("error"),
+      blockchain: fakeBlockchain("error")
+    });
 
     const response = await app.inject({
       method: "GET",
@@ -142,12 +125,8 @@ describe("API", () => {
     expect(response.json()).toMatchObject({
       status: "not_ready",
       checks: {
-        database: {
-          status: "error"
-        },
-        blockchain: {
-          status: "error"
-        }
+        database: { status: "error" },
+        blockchain: { status: "error" }
       }
     });
 

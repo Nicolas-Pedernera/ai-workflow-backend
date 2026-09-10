@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeRisk } from "../src/modules/risk/risk-analyzer.js";
+import { analyzeRisk } from "../src/modules/risk/domain/risk-analyzer.js";
 
 describe("analyzeRisk", () => {
   it("calculates a long position correctly", () => {

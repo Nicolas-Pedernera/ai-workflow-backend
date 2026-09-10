@@ -3,6 +3,9 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Nicolas-Pedernera/ai-workflow-backend/actions/workflows/test.yml">
+    <img src="https://github.com/Nicolas-Pedernera/ai-workflow-backend/actions/workflows/test.yml/badge.svg" alt="CI status" />
+  </a>
   <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white" alt="Node >=18" />
   <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Fastify-black?logo=fastify&logoColor=white" alt="Fastify" />
@@ -45,20 +48,32 @@ Desarrollado activamente como parte de mi portfolio de ingeniería, demostrando 
   <img src=".github/assets/architecture-diagram.svg" alt="Diagrama de arquitectura: REST API -> Workflow Routes -> Workflow Service -> Repository/AI Provider -> PostgreSQL/AI Provider(s)" width="100%" />
 </p>
 
+El backend sigue un enfoque de **Clean Architecture organizado en vertical slices**, inspirado en patrones de CQRS:
+
+- **`domain/`** — lógica de negocio pura, sin dependencias de infraestructura (fácil de testear sin mocks pesados).
+- **`commands/` y `queries/`** — cada acción del sistema (crear workflow, ejecutar workflow, listar workflows, etc.) vive en su propia carpeta con handler, ruta HTTP y, cuando aplica, validación de input.
+- **`database/`** — puertos (interfaces) + implementaciones concretas (Postgres). El dominio nunca importa `pg` directamente.
+- **Command/Query Bus** (`src/shared/cqrs/`) — desacopla las rutas HTTP de los handlers que resuelven cada acción.
+- **`index.ts`** de cada módulo — punto único de composición (wiring de dependencias + registro de rutas).
+
+Esto permite testear la lógica de negocio sin base de datos real (repositorios en memoria en los tests) y mantener cada feature autocontenida y fácil de ubicar.
+
 ## Features principales
 
 | Área | Detalle |
 |---|---|
 | API | REST API construida con Fastify |
 | Tipado | Codebase 100% TypeScript |
+| Arquitectura | Clean Architecture por vertical slices + Command/Query Bus |
 | Workflows | Creación, recuperación y ciclo de ejecución |
-| Persistencia | PostgreSQL con patrón Repository |
-| Dominio | Capa de servicio para lógica de negocio |
+| Persistencia | PostgreSQL con patrón Repository (puerto + adaptador) |
+| Riesgo | Motor de análisis de riesgo de liquidación (lógica de dominio pura) |
+| Blockchain | Registro on-chain de workflows vía smart contract (viem) |
 | IA | Abstracción de proveedores + mock provider para dev/testing |
-| Testing | Tests automatizados de API con Vitest |
+| Testing | Tests automatizados de API y handlers con Vitest |
 | Calidad | Linting con ESLint |
 | Build | Build de producción en TypeScript |
-| Infra | Entorno de desarrollo con Docker Compose |
+| Infra | Entorno de desarrollo con Docker Compose + CI con Postgres real |
 
 ## Estructura del proyecto
 
@@ -67,13 +82,27 @@ src/
 ├── app.ts
 ├── server.ts
 ├── config/
-│   └── database.ts
+│   ├── database.ts
+│   └── blockchain.ts
+├── shared/
+│   ├── cqrs/                       # Command/Query bus compartido
+│   └── exceptions/                 # Excepciones de dominio base
 ├── modules/
-│   └── workflows/
-│       ├── workflow.repository.ts
-│       ├── workflow.routes.ts
-│       ├── workflow.service.ts
-│       └── workflow.types.ts
+│   ├── workflows/
+│   │   ├── commands/               # create-workflow, run-workflow, set-workflow-status
+│   │   ├── queries/                # find-workflows, find-workflow-by-id, find-run-by-id...
+│   │   ├── domain/                 # tipos, errores y lógica pura
+│   │   ├── database/               # puerto + repositorio Postgres
+│   │   └── index.ts                # composición del módulo
+│   ├── health/
+│   │   ├── queries/get-readiness/
+│   │   ├── domain/
+│   │   └── database/
+│   ├── blockchain/
+│   │   ├── client/                 # adaptador viem/RPC al smart contract
+│   │   └── domain/                 # errores de dominio
+│   └── risk/
+│       └── domain/                 # motor de análisis de riesgo (lógica pura)
 └── providers/
     └── ai/
         ├── ai-provider.factory.ts
@@ -82,7 +111,13 @@ src/
 
 test/
 ├── app.test.ts
-└── workflows.test.ts
+├── workflows.test.ts
+├── create-workflow.handler.test.ts
+├── risk-analyzer.test.ts
+├── blockchain-integration.test.ts
+├── ai-provider-factory.test.ts
+└── helpers/
+    └── in-memory-workflow-repository.ts
 ```
 
 ## Ciclo de vida de un workflow
@@ -152,18 +187,18 @@ npm test
 npm run lint
 ```
 
-Estado actual de tests: **2 archivos de test / 10 tests pasando**.
+Requiere una instancia de PostgreSQL disponible (ver `docker compose up -d` y variables de entorno en `.env.example`). El pipeline de CI levanta Postgres automáticamente en cada push/PR.
 
 ## Principios de ingeniería
 
-- Separación de responsabilidades
-- Tipado fuerte
-- Límites de dominio explícitos
-- Persistencia basada en Repository
+- Vertical slices: cada feature (command/query) es autocontenida
+- Dominio puro, sin dependencias de infraestructura
+- Command/Query Bus para desacoplar HTTP de la lógica de negocio
+- Tipado fuerte de punta a punta
+- Persistencia basada en puertos (interfaces) + adaptadores
 - Abstracción de proveedores de IA
-- Lógica de negocio testeable
-- Estado de aplicación persistente
-- Límites de API claros
+- Excepciones de dominio tipadas, traducidas a HTTP en un único lugar
+- Lógica de negocio testeable sin base de datos real (repositorios en memoria en tests)
 
 ## Roadmap
 

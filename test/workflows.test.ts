@@ -1,26 +1,29 @@
 import { describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
-import { WorkflowService } from "../src/modules/workflows/workflow.service.js";
-import { BlockchainService } from "../src/modules/blockchain/blockchain.service.js";
+import { BlockchainService } from "../src/modules/blockchain/client/blockchain.service.js";
 import { MockAIProvider } from "../src/providers/ai/mock-ai-provider.js";
+import { InMemoryWorkflowRepository } from "./helpers/in-memory-workflow-repository.js";
+
+function fakeBlockchain(overrides: Partial<BlockchainService> = {}) {
+  return {
+    registerWorkflow: async (workflowId: string) => ({
+      blockchainId: `0x${workflowId.replace(/[^a-f0-9]/gi, "").padEnd(64, "0").slice(0, 64)}`,
+      transactionHash: `0x${"a".repeat(64)}`
+    }),
+    setWorkflowStatus: async () => `0x${"b".repeat(64)}`,
+    ...overrides
+  } as unknown as BlockchainService;
+}
+
+function buildTestApp(blockchainOverrides: Partial<BlockchainService> = {}) {
+  return buildApp(undefined, {
+    repository: new InMemoryWorkflowRepository(),
+    aiProvider: new MockAIProvider(),
+    blockchain: fakeBlockchain(blockchainOverrides)
+  });
+}
 
 describe("Workflows API", () => {
-  function buildTestApp() {
-    const blockchain = {
-      registerWorkflow: async (workflowId: string) => ({
-        blockchainId: `0x${workflowId.replace(/[^a-f0-9]/gi, "").padEnd(64, "0").slice(0, 64)}`,
-        transactionHash: `0x${"a".repeat(64)}`
-      })
-    };
-
-    const workflowService = new WorkflowService(
-      undefined,
-      new MockAIProvider(),
-      blockchain as unknown as BlockchainService
-    );
-
-    return buildApp(workflowService);
-  }
   it("creates and retrieves a workflow", async () => {
     const app = buildTestApp();
 
@@ -57,9 +60,7 @@ describe("Workflows API", () => {
     await app.inject({
       method: "POST",
       url: "/api/v1/workflows",
-      payload: {
-        name: "Workflow one"
-      }
+      payload: { name: "Workflow one" }
     });
 
     const response = await app.inject({
@@ -79,9 +80,7 @@ describe("Workflows API", () => {
     const createResponse = await app.inject({
       method: "POST",
       url: "/api/v1/workflows",
-      payload: {
-        name: "AI assistant"
-      }
+      payload: { name: "AI assistant" }
     });
 
     const workflowId = createResponse.json().data.id;
@@ -89,11 +88,7 @@ describe("Workflows API", () => {
     const runResponse = await app.inject({
       method: "POST",
       url: `/api/v1/workflows/${workflowId}/run`,
-      payload: {
-        input: {
-          prompt: "Hello AI"
-        }
-      }
+      payload: { input: { prompt: "Hello AI" } }
     });
 
     expect(runResponse.statusCode).toBe(201);
@@ -108,9 +103,7 @@ describe("Workflows API", () => {
     expect(run.output).toEqual({
       message: "Mock response for: Hello AI",
       workflowId,
-      processedInput: {
-        prompt: "Hello AI"
-      }
+      processedInput: { prompt: "Hello AI" }
     });
 
     const getRunResponse = await app.inject({
@@ -130,9 +123,7 @@ describe("Workflows API", () => {
     const createResponse = await app.inject({
       method: "POST",
       url: "/api/v1/workflows",
-      payload: {
-        name: "Failing workflow"
-      }
+      payload: { name: "Failing workflow" }
     });
 
     const workflowId = createResponse.json().data.id;
@@ -140,11 +131,7 @@ describe("Workflows API", () => {
     const runResponse = await app.inject({
       method: "POST",
       url: `/api/v1/workflows/${workflowId}/run`,
-      payload: {
-        input: {
-          fail: true
-        }
-      }
+      payload: { input: { fail: true } }
     });
 
     expect(runResponse.statusCode).toBe(201);
@@ -161,32 +148,12 @@ describe("Workflows API", () => {
   });
 
   it("changes workflow status to inactive and updates blockchain", async () => {
-    const blockchain = {
-      registerWorkflow: async (workflowId: string) => ({
-        blockchainId: `0x${workflowId.replace(/[^a-f0-9]/gi, "").padEnd(64, "0").slice(0, 64)}`,
-        transactionHash: `0x${"a".repeat(64)}`
-      }),
-      setWorkflowStatus: async (workflowId: string, active: boolean) => {
-        void workflowId;
-        void active;
-        return `0x${"b".repeat(64)}`;
-      }
-    };
-
-    const workflowService = new WorkflowService(
-      undefined,
-      new MockAIProvider(),
-      blockchain as unknown as BlockchainService
-    );
-
-    const app = buildApp(workflowService);
+    const app = buildTestApp();
 
     const createResponse = await app.inject({
       method: "POST",
       url: "/api/v1/workflows",
-      payload: {
-        name: "Status lifecycle test"
-      }
+      payload: { name: "Status lifecycle test" }
     });
 
     const workflowId = createResponse.json().data.id;
@@ -194,9 +161,7 @@ describe("Workflows API", () => {
     const response = await app.inject({
       method: "PATCH",
       url: `/api/v1/workflows/${workflowId}/status`,
-      payload: {
-        status: "inactive"
-      }
+      payload: { status: "inactive" }
     });
 
     expect(response.statusCode).toBe(200);
@@ -211,9 +176,7 @@ describe("Workflows API", () => {
     const createResponse = await app.inject({
       method: "POST",
       url: "/api/v1/workflows",
-      payload: {
-        name: "Invalid status test"
-      }
+      payload: { name: "Invalid status test" }
     });
 
     const workflowId = createResponse.json().data.id;
@@ -221,15 +184,13 @@ describe("Workflows API", () => {
     const response = await app.inject({
       method: "PATCH",
       url: `/api/v1/workflows/${workflowId}/status`,
-      payload: {
-        status: "paused"
-      }
+      payload: { status: "paused" }
     });
 
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({
       status: "error",
-      error: "Validation Error"
+      error: "VALIDATION_ERROR"
     });
 
     await app.close();
